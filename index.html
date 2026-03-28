@@ -21,8 +21,9 @@
         .grid-7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
         .cal-day { aspect-ratio: 1; display: flex; flex-direction: column; padding: 4px; border-radius: 12px; border: 1px solid #f1f5f9; background: #fff; }
         
+        /* 히트맵 호버 이펙트 추가 (클릭 유도) */
         .heatmap-cell { border-radius: 12px; padding: 12px 8px; text-align: center; transition: 0.2s; border: 2px solid transparent; cursor: pointer; }
-        .heatmap-cell:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); z-index: 20; }
+        .heatmap-cell:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); z-index: 20; border-color: #818cf8; }
         
         .hm-0 { background: #f8fafc; color: #94a3b8; }
         .hm-1 { background: #e0e7ff; color: #4f46e5; }
@@ -63,9 +64,7 @@
                     <h2 class="text-2xl font-black">📌 모집 중인 세션</h2>
                     <button id="btn-open-create" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg hover-base btn-indigo-hover">+ 세션 열기</button>
                 </div>
-                <div id="session-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                    <div class="col-span-full py-20 text-center text-slate-400 font-medium italic">데이터 로드 중...</div>
-                </div>
+                <div id="session-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
             </section>
 
             <section class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200">
@@ -94,12 +93,36 @@
                     <div class="flex justify-between items-end mb-6 border-b pb-4">
                         <div>
                             <h3 class="text-xl font-black mb-1">🔥 일정 조율표 (Heatmap)</h3>
-                            <p class="text-[10px] text-slate-400">색이 진할수록, 왕관(👑)이 있을수록 모두가 가능한 날입니다.</p>
+                            <p class="text-[10px] text-slate-400">날짜를 클릭하면 하단에 상세 타임라인이 나타납니다.</p>
                         </div>
                         <div id="room-members-toggle" class="flex flex-wrap gap-2 justify-end max-w-[50%]"></div>
                     </div>
-                    <div class="overflow-y-auto max-h-[500px] pb-48 pt-2 -mx-4 px-4">
-                        <div id="room-heatmap" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 px-8"></div>
+                    
+                    <div class="overflow-y-auto max-h-[350px] pt-2">
+                        <div id="room-heatmap" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4"></div>
+                    </div>
+
+                    <div id="timeline-panel" class="hidden mt-8 border-t-2 border-indigo-100 pt-8 bg-slate-50/50 -mx-8 px-8 pb-4 rounded-b-[2.5rem]">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 id="timeline-date-title" class="text-lg font-black text-indigo-700">00월 00일 상세 타임라인</h4>
+                            <button onclick="closeTimeline()" class="text-xs font-bold bg-white text-slate-400 hover:text-red-500 px-3 py-1 rounded-full border shadow-sm transition-colors">닫기 ×</button>
+                        </div>
+                        
+                        <div class="relative h-6 border-b border-slate-300 mb-4 text-[9px] font-mono text-slate-400 pl-16">
+                            <div class="relative w-full h-full">
+                                <span class="absolute left-0 -translate-x-1/2">00</span>
+                                <span class="absolute left-1/4 -translate-x-1/2">06</span>
+                                <span class="absolute left-2/4 -translate-x-1/2">12</span>
+                                <span class="absolute left-3/4 -translate-x-1/2">18</span>
+                                <span class="absolute right-0 translate-x-1/2">24</span>
+                                <div class="absolute left-1/4 w-px h-32 bg-slate-200 top-6 -z-10"></div>
+                                <div class="absolute left-2/4 w-px h-32 bg-slate-200 top-6 -z-10"></div>
+                                <div class="absolute left-3/4 w-px h-32 bg-slate-200 top-6 -z-10"></div>
+                            </div>
+                        </div>
+
+                        <div id="timeline-bars" class="space-y-3 relative z-10">
+                            </div>
                     </div>
                 </div>
 
@@ -108,24 +131,22 @@
                     <p class="text-[10px] text-slate-400 mb-6">원하는 기간과 요일을 선택하여 한 번에 추가해 주세요.</p>
                     
                     <div class="flex flex-col gap-2 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">기간 설정 (하루만 원하면 앞칸만 입력)</label>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">기간 설정</label>
                         <div class="flex gap-2 items-center mb-2">
                             <input type="date" id="in-my-start-date" class="flex-1 bg-white border-2 border-slate-200 p-2 rounded-xl text-xs font-bold outline-none focus:border-indigo-500">
                             <span class="text-slate-400 font-bold">~</span>
-                            <input type="date" id="in-my-end-date" class="flex-1 bg-white border-2 border-slate-200 p-2 rounded-xl text-xs font-bold outline-none focus:border-indigo-500" title="비워두면 단일 날짜로 추가됩니다.">
+                            <input type="date" id="in-my-end-date" class="flex-1 bg-white border-2 border-slate-200 p-2 rounded-xl text-xs font-bold outline-none focus:border-indigo-500">
                         </div>
-
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">반복할 요일 (클릭하여 켜기/끄기)</label>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">반복할 요일</label>
                         <div class="flex gap-1 justify-between mb-2">
-                            <button type="button" onclick="toggleMyDay(1)" id="my-day-1" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">월</button>
-                            <button type="button" onclick="toggleMyDay(2)" id="my-day-2" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">화</button>
-                            <button type="button" onclick="toggleMyDay(3)" id="my-day-3" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">수</button>
-                            <button type="button" onclick="toggleMyDay(4)" id="my-day-4" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">목</button>
-                            <button type="button" onclick="toggleMyDay(5)" id="my-day-5" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">금</button>
-                            <button type="button" onclick="toggleMyDay(6)" id="my-day-6" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">토</button>
-                            <button type="button" onclick="toggleMyDay(0)" id="my-day-0" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-red-500 transition-colors">일</button>
+                            <button type="button" onclick="toggleMyDay(1)" id="my-day-1" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600">월</button>
+                            <button type="button" onclick="toggleMyDay(2)" id="my-day-2" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600">화</button>
+                            <button type="button" onclick="toggleMyDay(3)" id="my-day-3" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600">수</button>
+                            <button type="button" onclick="toggleMyDay(4)" id="my-day-4" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600">목</button>
+                            <button type="button" onclick="toggleMyDay(5)" id="my-day-5" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600">금</button>
+                            <button type="button" onclick="toggleMyDay(6)" id="my-day-6" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600">토</button>
+                            <button type="button" onclick="toggleMyDay(0)" id="my-day-0" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-red-500">일</button>
                         </div>
-
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">세부 시간 설정</label>
                         <div class="flex gap-2 items-center mb-4">
                             <input type="time" id="in-my-start" value="19:00" class="flex-1 bg-white border-2 border-slate-200 p-2 rounded-xl text-xs font-bold outline-none focus:border-indigo-500">
@@ -160,55 +181,7 @@
             </div>
         </div>
 
-        <div id="modal-create" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-xl relative overflow-y-auto max-h-[90vh]">
-                <h3 id="modal-title" class="text-2xl font-black mb-8">🎲 세션 정보 설정</h3>
-                <input type="hidden" id="edit-session-id">
-                
-                <div class="space-y-4 mb-10 text-left text-sm">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="in-title" placeholder="세션 제목" class="w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold">
-                        <input type="text" id="in-rule" placeholder="사용 룰" class="w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold">
-                    </div>
-                    
-                    <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100">
-                        <label class="text-[10px] font-bold text-slate-400 mb-2 block uppercase tracking-widest">세션 키워드 (다중 선택 가능)</label>
-                        <div id="modal-tags-container" class="flex flex-wrap gap-2"></div>
-                    </div>
-
-                    <textarea id="in-desc" placeholder="시나리오 개요 및 GM 안내사항" class="w-full h-32 p-4 bg-slate-50 border-2 rounded-2xl outline-none font-batang"></textarea>
-                    
-                    <div class="grid grid-cols-2 gap-4 items-center">
-                        <div class="flex gap-2 p-3 bg-slate-50 rounded-2xl border-2 items-center">
-                            <input type="color" id="in-color" value="#4f46e5" onchange="updateColorDisplay(this.value)" class="w-10 h-10 rounded-lg cursor-pointer border-none bg-transparent">
-                            <span id="color-hex-display" class="text-[10px] text-slate-400 font-mono transition-colors">배너 컬러</span>
-                        </div>
-                        <div class="relative w-full">
-                            <select id="in-cap" onchange="toggleCustomCap()" class="w-full p-4 bg-slate-50 border-2 rounded-2xl font-bold outline-none appearance-none">
-                                <option value="1">1명</option><option value="2">2명</option><option value="3">3명</option>
-                                <option value="4" selected>4명</option><option value="5">5명</option><option value="6">6명</option>
-                                <option value="7">7명</option><option value="8">8명</option><option value="9">9명</option>
-                                <option value="10">10명</option><option value="custom">직접 입력...</option>
-                            </select>
-                            <input type="number" id="in-cap-custom" placeholder="인원수 입력" min="1" class="hidden absolute inset-0 w-full h-full p-4 bg-white border-2 border-indigo-500 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-center">
-                            <button id="btn-cap-cancel" type="button" onclick="cancelCustomCap()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 font-black p-2 bg-white rounded-full">×</button>
-                        </div>
-                    </div>
-                    <div class="flex gap-3">
-                        <button id="mode-on" type="button" class="flex-1 py-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-600 font-bold hover-base">온라인</button>
-                        <button id="mode-off" type="button" class="flex-1 py-3 rounded-xl border-2 border-slate-100 text-slate-400 font-bold hover-base">오프라인</button>
-                    </div>
-                    <input type="text" id="in-loc" placeholder="링크 또는 장소" class="w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold">
-                </div>
-                
-                <div class="flex gap-4">
-                    <button id="btn-create-delete" type="button" class="hidden px-5 py-4 bg-red-50 text-red-500 font-bold rounded-2xl hover-base hover:bg-red-100 transition-colors text-lg" title="세션 완전히 삭제하기">🗑️</button>
-                    <button id="btn-create-close" type="button" class="flex-1 py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl hover-base btn-gray-hover">취소</button>
-                    <button id="btn-create-submit" type="button" class="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover-base btn-indigo-hover">저장하기</button>
-                </div>
-            </div>
-        </div>
-
+        <div id="modal-create" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4"><div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-xl relative overflow-y-auto max-h-[90vh]"><h3 id="modal-title" class="text-2xl font-black mb-8">🎲 세션 정보 설정</h3><input type="hidden" id="edit-session-id"><div class="space-y-4 mb-10 text-left text-sm"><div class="grid grid-cols-2 gap-4"><input type="text" id="in-title" placeholder="세션 제목" class="w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold"><input type="text" id="in-rule" placeholder="사용 룰" class="w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold"></div><div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100"><label class="text-[10px] font-bold text-slate-400 mb-2 block uppercase tracking-widest">세션 키워드 (다중 선택 가능)</label><div id="modal-tags-container" class="flex flex-wrap gap-2"></div></div><textarea id="in-desc" placeholder="시나리오 개요 및 GM 안내사항" class="w-full h-32 p-4 bg-slate-50 border-2 rounded-2xl outline-none font-batang"></textarea><div class="grid grid-cols-2 gap-4 items-center"><div class="flex gap-2 p-3 bg-slate-50 rounded-2xl border-2 items-center"><input type="color" id="in-color" value="#4f46e5" onchange="updateColorDisplay(this.value)" class="w-10 h-10 rounded-lg cursor-pointer border-none bg-transparent"><span id="color-hex-display" class="text-[10px] text-slate-400 font-mono transition-colors">배너 컬러</span></div><div class="relative w-full"><select id="in-cap" onchange="toggleCustomCap()" class="w-full p-4 bg-slate-50 border-2 rounded-2xl font-bold outline-none appearance-none"><option value="1">1명</option><option value="2">2명</option><option value="3">3명</option><option value="4" selected>4명</option><option value="5">5명</option><option value="6">6명</option><option value="7">7명</option><option value="8">8명</option><option value="9">9명</option><option value="10">10명</option><option value="custom">직접 입력...</option></select><input type="number" id="in-cap-custom" placeholder="인원수 입력" min="1" class="hidden absolute inset-0 w-full h-full p-4 bg-white border-2 border-indigo-500 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-center"><button id="btn-cap-cancel" type="button" onclick="cancelCustomCap()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 font-black p-2 bg-white rounded-full">×</button></div></div><div class="flex gap-3"><button id="mode-on" type="button" class="flex-1 py-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-600 font-bold hover-base">온라인</button><button id="mode-off" type="button" class="flex-1 py-3 rounded-xl border-2 border-slate-100 text-slate-400 font-bold hover-base">오프라인</button></div><input type="text" id="in-loc" placeholder="링크 또는 장소" class="w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold"></div><div class="flex gap-4"><button id="btn-create-delete" type="button" class="hidden px-5 py-4 bg-red-50 text-red-500 font-bold rounded-2xl hover-base hover:bg-red-100 transition-colors text-lg" title="세션 완전히 삭제하기">🗑️</button><button id="btn-create-close" type="button" class="flex-1 py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl hover-base btn-gray-hover">취소</button><button id="btn-create-submit" type="button" class="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover-base btn-indigo-hover">저장하기</button></div></div></div>
         <div id="modal-nick" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[110] flex items-center justify-center p-4"><div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm relative text-center"><h3 class="text-2xl font-black mb-6">닉네임 변경</h3><input type="text" id="in-nick" class="w-full p-5 bg-slate-50 border-2 rounded-2xl font-bold text-center text-xl mb-6 outline-none focus:border-indigo-500"><div class="flex gap-4"><button id="btn-nick-close" class="flex-1 py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl hover-base btn-gray-hover">취소</button><button id="btn-nick-submit" class="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover-base btn-indigo-hover">변경하기</button></div></div></div>
     </main>
 
@@ -226,35 +199,23 @@
 
         const AVAILABLE_TAGS = ['GM리스', 'GMPC', '텍스트세션', '보이스세션', '대면세션', '입문환영', '숙련자추천', '룰북필수', '룰북미소지자가능', '단편(원샷)', '단기(다회차)', '장기/캠페인'];
         let currentTags = [];
-        
-        // [핵심 패치] PL 요일 일괄 선택기 (기본으로 월~일 모두 켜져 있음)
         let selectedWeekdays = [0, 1, 2, 3, 4, 5, 6]; 
+        
+        // [패치] 메모리 최적화를 위한 전역 변수
+        let roomAvailsCache = []; 
 
         const toggle = (id, show) => document.getElementById(id).classList.toggle('hidden', !show);
         const escapeHTML = (str) => str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
         window.showTooltip = (el, title, rawListHTML) => {
             const tt = document.getElementById('global-tooltip');
-            tt.innerHTML = `
-                <div class="font-black text-indigo-600 mb-2 border-b border-indigo-50 pb-1 text-center relative z-10 bg-white">${title}</div>
-                <div class="relative z-10 bg-white">${rawListHTML}</div>
-                <div id="tt-arrow" class="absolute -bottom-1.5 w-3 h-3 bg-white border-b-2 border-r-2 border-indigo-100 rotate-45 transform -translate-x-1/2" style="left: 50%;"></div>
-            `;
+            tt.innerHTML = `<div class="font-black text-indigo-600 mb-2 border-b border-indigo-50 pb-1 text-center relative z-10 bg-white">${title}</div><div class="relative z-10 bg-white">${rawListHTML}</div><div id="tt-arrow" class="absolute -bottom-1.5 w-3 h-3 bg-white border-b-2 border-r-2 border-indigo-100 rotate-45 transform -translate-x-1/2" style="left: 50%;"></div>`;
             tt.classList.remove('hidden');
-
-            const rect = el.getBoundingClientRect();
-            const ttRect = tt.getBoundingClientRect();
-
-            let targetLeft = rect.left + (rect.width / 2) - (ttRect.width / 2);
-            let arrowOffset = ttRect.width / 2;
-
+            const rect = el.getBoundingClientRect(); const ttRect = tt.getBoundingClientRect();
+            let targetLeft = rect.left + (rect.width / 2) - (ttRect.width / 2); let arrowOffset = ttRect.width / 2;
             if (targetLeft < 10) { targetLeft = 10; arrowOffset = rect.left + (rect.width / 2) - 10; } 
             else if (targetLeft + ttRect.width > window.innerWidth - 10) { targetLeft = window.innerWidth - ttRect.width - 10; arrowOffset = rect.left + (rect.width / 2) - targetLeft; }
-
-            tt.style.left = targetLeft + 'px';
-            tt.style.top = (rect.top - 10) + 'px';
-            document.getElementById('tt-arrow').style.left = arrowOffset + 'px';
-
+            tt.style.left = targetLeft + 'px'; tt.style.top = (rect.top - 10) + 'px'; document.getElementById('tt-arrow').style.left = arrowOffset + 'px';
             setTimeout(() => tt.classList.add('opacity-100'), 10);
         };
 
@@ -275,52 +236,29 @@
 
         async function renderLobby() {
             await fetchGlobalData();
-            
-            const year = masterDate.getFullYear();
-            const month = masterDate.getMonth();
+            const year = masterDate.getFullYear(); const month = masterDate.getMonth();
             document.getElementById('master-month-title').innerText = `${year}.${String(month + 1).padStart(2, '0')}`;
-            
-            const firstDay = new Date(year, month, 1).getDay();
-            const lastDate = new Date(year, month + 1, 0).getDate();
-            const calGrid = document.getElementById('master-calendar-grid');
-            calGrid.innerHTML = "";
-
+            const firstDay = new Date(year, month, 1).getDay(); const lastDate = new Date(year, month + 1, 0).getDate();
+            const calGrid = document.getElementById('master-calendar-grid'); calGrid.innerHTML = "";
             for (let i = 0; i < firstDay; i++) calGrid.innerHTML += `<div></div>`;
             for (let d = 1; d <= lastDate; d++) {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 let eventsHTML = '';
-                allSessions.forEach(s => {
-                    const matches = (s.confirmed_schedules || []).filter(x => x.date === dateStr);
-                    matches.forEach(m => { eventsHTML += `<div class="text-[9px] text-white truncate px-1.5 py-0.5 mt-1 rounded-md shadow-sm font-bold" style="background-color: ${s.banner_color || '#4f46e5'}">${m.time} ${s.title}</div>`; });
-                });
+                allSessions.forEach(s => { (s.confirmed_schedules || []).filter(x => x.date === dateStr).forEach(m => { eventsHTML += `<div class="text-[9px] text-white truncate px-1.5 py-0.5 mt-1 rounded-md shadow-sm font-bold" style="background-color: ${s.banner_color || '#4f46e5'}">${m.time} ${s.title}</div>`; }); });
                 calGrid.innerHTML += `<div class="cal-day"><span class="text-xs font-bold text-slate-600 mb-1">${d}</span><div class="flex-grow overflow-hidden">${eventsHTML}</div></div>`;
             }
 
             const grid = document.getElementById('session-grid');
             if(allSessions.length === 0) return grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-400 italic">개설된 세션이 없습니다.</div>`;
-
             grid.innerHTML = allSessions.map(s => {
-                const members = allMembers.filter(m => m.session_id === s.id);
-                const isFull = members.length >= s.capacity;
-                const tags = s.tags || [];
-                const hashtagHTML = tags.map(t => `<span class="text-[10px] font-black text-white drop-shadow-sm ml-1.5">#${t}</span>`).join('');
+                const members = allMembers.filter(m => m.session_id === s.id); const isFull = members.length >= s.capacity;
+                const tags = s.tags || []; const hashtagHTML = tags.map(t => `<span class="text-[10px] font-black text-white drop-shadow-sm ml-1.5">#${t}</span>`).join('');
                 const gmLabel = tags.includes('GM리스') ? 'Creator' : 'GM';
                 const statusBadge = (s.confirmed_schedules && s.confirmed_schedules.length > 0) ? `<span class="bg-green-100 text-green-700 badge-status">일정 확정</span>` : `<span class="bg-indigo-100 text-indigo-700 badge-status">모집 중</span>`;
-
                 return `
                 <div onclick="goRoom('${s.id}')" class="session-card bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col text-left relative">
-                    <div style="background-color: ${s.banner_color || '#4f46e5'}" class="min-h-[6.5rem] w-full p-5 flex flex-col justify-between">
-                        <div class="flex justify-between items-start"><span class="bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase border border-white/30 tracking-widest shadow-sm">${s.location_type}</span>${statusBadge}</div>
-                        <div class="flex flex-wrap justify-end gap-y-1 mt-2">${hashtagHTML}</div>
-                    </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <p class="text-[10px] font-black text-indigo-500 mb-1 tracking-tighter uppercase">${s.rule || '자유 룰'}</p>
-                        <h4 class="text-base font-black text-slate-800 mb-2 line-clamp-2 leading-tight">${s.title}</h4>
-                        <div class="mt-auto pt-4 flex justify-between items-center">
-                            <span class="text-[10px] font-bold text-slate-500">${gmLabel}: ${s.creator?.nickname || '알 수 없음'}</span>
-                            <span class="text-[11px] font-black ${isFull ? 'text-red-400' : 'text-slate-400'}">👤 ${members.length} / ${s.capacity}</span>
-                        </div>
-                    </div>
+                    <div style="background-color: ${s.banner_color || '#4f46e5'}" class="min-h-[6.5rem] w-full p-5 flex flex-col justify-between"><div class="flex justify-between items-start"><span class="bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase border border-white/30 tracking-widest shadow-sm">${s.location_type}</span>${statusBadge}</div><div class="flex flex-wrap justify-end gap-y-1 mt-2">${hashtagHTML}</div></div>
+                    <div class="p-6 flex-grow flex flex-col"><p class="text-[10px] font-black text-indigo-500 mb-1 tracking-tighter uppercase">${s.rule || '자유 룰'}</p><h4 class="text-base font-black text-slate-800 mb-2 line-clamp-2 leading-tight">${s.title}</h4><div class="mt-auto pt-4 flex justify-between items-center"><span class="text-[10px] font-bold text-slate-500">${gmLabel}: ${s.creator?.nickname || '알 수 없음'}</span><span class="text-[11px] font-black ${isFull ? 'text-red-400' : 'text-slate-400'}">👤 ${members.length} / ${s.capacity}</span></div></div>
                 </div>`;
             }).join('');
         }
@@ -357,24 +295,18 @@
             toggle('gm-control-panel', isGM);
             
             const scheds = s.confirmed_schedules || [];
-            document.getElementById('confirmed-schedules-list').innerHTML = scheds.length === 0 ? `<div class="text-[10px] text-slate-400 italic py-2">확정된 일정이 없습니다.</div>` : scheds.map((sc, idx) => `
-                <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm text-xs">
-                    <span class="font-bold text-slate-600">${sc.date} <span class="text-indigo-500 ml-1">${sc.time}</span></span>
-                    <button onclick="removeConfirmedSchedule(${idx})" class="text-slate-300 hover:text-red-500 font-black px-1 text-sm">×</button>
-                </div>
-            `).join('');
+            document.getElementById('confirmed-schedules-list').innerHTML = scheds.length === 0 ? `<div class="text-[10px] text-slate-400 italic py-2">확정된 일정이 없습니다.</div>` : scheds.map((sc, idx) => `<div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm text-xs"><span class="font-bold text-slate-600">${sc.date} <span class="text-indigo-500 ml-1">${sc.time}</span></span><button onclick="removeConfirmedSchedule(${idx})" class="text-slate-300 hover:text-red-500 font-black px-1 text-sm">×</button></div>`).join('');
 
+            // DB에서 일정 가져와서 전역 변수에 저장 (타임라인 계산용)
             const { data: avails } = await client.from('session_availability').select(`*, users(nickname, avatar_url)`).eq('session_id', s.id);
+            roomAvailsCache = avails || [];
             
-            const myAvails = avails.filter(a => a.user_id === userState.id).sort((a,b) => new Date(a.available_date) - new Date(b.available_date));
-            document.getElementById('my-avail-list').innerHTML = myAvails.length === 0 ? `<div class="text-xs text-slate-400 italic p-4 text-center">등록된 일정이 없습니다.</div>` : myAvails.map(a => `
-                <div class="flex justify-between items-center bg-indigo-50 p-3 rounded-xl border border-indigo-100">
-                    <div class="flex flex-col"><span class="font-bold text-indigo-900 text-sm">${a.available_date.split('-')[1]}월 ${a.available_date.split('-')[2]}일</span><span class="text-[10px] font-black text-indigo-500 tracking-wider">${a.start_time.slice(0,5)} ~ ${a.end_time.slice(0,5)}</span></div>
-                    <button onclick="delMyAvail('${a.id}')" class="text-red-400 font-black px-2 text-lg hover:scale-125 transition-transform" title="삭제">×</button>
-                </div>
-            `).join('');
+            const myAvails = roomAvailsCache.filter(a => a.user_id === userState.id).sort((a,b) => new Date(a.available_date) - new Date(b.available_date));
+            document.getElementById('my-avail-list').innerHTML = myAvails.length === 0 ? `<div class="text-xs text-slate-400 italic p-4 text-center">등록된 일정이 없습니다.</div>` : myAvails.map(a => `<div class="flex justify-between items-center bg-indigo-50 p-3 rounded-xl border border-indigo-100"><div class="flex flex-col"><span class="font-bold text-indigo-900 text-sm">${a.available_date.split('-')[1]}월 ${a.available_date.split('-')[2]}일</span><span class="text-[10px] font-black text-indigo-500 tracking-wider">${a.start_time.slice(0,5)} ~ ${a.end_time.slice(0,5)}</span></div><button onclick="delMyAvail('${a.id}')" class="text-red-400 font-black px-2 text-lg hover:scale-125 transition-transform" title="삭제">×</button></div>`).join('');
 
-            renderHeatmap(avails, members.length + 1);
+            // 타임라인 패널은 처음엔 무조건 숨김
+            closeTimeline();
+            renderHeatmap(roomAvailsCache, members.length + 1);
         }
 
         function renderHeatmap(avails, totalMembers) {
@@ -402,8 +334,9 @@
                 const listHTML = dayAvails.map(a => `<div class="flex justify-between border-b border-indigo-50 pb-1 mb-1 last:border-0 gap-4 bg-white relative z-10"><span class="font-bold text-slate-700">${a.users.nickname}</span><span class="text-indigo-500 tracking-wider font-mono font-bold">${a.start_time.slice(0,5)}~${a.end_time.slice(0,5)}</span></div>`).join('');
                 const safeListStr = escapeHTML(listHTML);
 
+                // [핵심 패치] 셀 클릭 시 openTimeline 실행 (날짜 전달)
                 return `
-                <div class="heatmap-cell ${colorClass} flex flex-col justify-center items-center relative" onmouseenter="showTooltip(this, '${titleStr}', '${safeListStr}')" onmouseleave="hideTooltip()">
+                <div class="heatmap-cell ${colorClass} flex flex-col justify-center items-center relative" onmouseenter="showTooltip(this, '${titleStr}', '${safeListStr}')" onmouseleave="hideTooltip()" onclick="openTimeline('${date}')">
                     ${isAll ? `<div class="absolute -top-3 -right-2 text-xl drop-shadow-md z-10">👑</div>` : ''}
                     <span class="text-[10px] font-bold opacity-80">${month}월</span>
                     <span class="text-xl font-black my-0.5">${day}일</span>
@@ -419,88 +352,103 @@
         }
 
         // ==========================================
-        // [핵심 패치] PL 요일 일괄 추가 엔진
+        // [핵심 엔진] 정밀 타임라인 시각화 알고리즘
+        // ==========================================
+        
+        // 시간 문자열(19:30)을 화면 너비 퍼센트(81.25)로 변환하는 마법의 수학 공식
+        const timeToPercent = (timeStr) => {
+            const [h, m] = timeStr.split(':').map(Number);
+            return ((h + (m / 60)) / 24) * 100;
+        };
+
+        window.closeTimeline = () => { toggle('timeline-panel', false); };
+
+        window.openTimeline = (dateStr) => {
+            // 해당 날짜에 해당하는 일정만 솎아내기
+            const dayAvails = roomAvailsCache.filter(a => a.available_date === dateStr);
+            if(dayAvails.length === 0) return; // 아무도 없으면 안 엶
+
+            // 날짜 타이틀 파싱
+            const dateObj = new Date(dateStr);
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const weekday = dateObj.toLocaleDateString('ko-KR', {weekday:'short'});
+            document.getElementById('timeline-date-title').innerText = `${month}월 ${day}일 (${weekday}) 상세 타임라인`;
+
+            // 유저별 막대그래프 HTML 생성
+            const container = document.getElementById('timeline-bars');
+            container.innerHTML = dayAvails.map(a => {
+                const startPct = timeToPercent(a.start_time);
+                const endPct = timeToPercent(a.end_time);
+                // 길이는 (종료위치 - 시작위치)
+                const widthPct = endPct - startPct;
+
+                return `
+                <div class="flex items-center group h-6">
+                    <div class="w-16 flex-shrink-0 text-right pr-3 text-[10px] font-black text-slate-600 truncate" title="${a.users.nickname}">
+                        ${a.users.nickname}
+                    </div>
+                    <div class="flex-1 relative h-full bg-white border border-slate-200 rounded overflow-hidden">
+                        <div class="absolute top-0 h-full bg-indigo-400 rounded-sm shadow-sm transition-all group-hover:bg-indigo-500" style="left: ${startPct}%; width: ${widthPct}%;"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-[8px] font-mono font-black text-white opacity-0 group-hover:opacity-100 z-10 pointer-events-none drop-shadow-md" style="left: ${startPct}%; width: ${widthPct}%;">
+                            ${a.start_time.slice(0,5)} ~ ${a.end_time.slice(0,5)}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            // 숨겨뒀던 패널 부드럽게 열기
+            toggle('timeline-panel', true);
+        };
+
+        // ==========================================
+        // 기타 유틸 및 액션 컨트롤
         // ==========================================
         window.toggleMyDay = (day) => {
             const btn = document.getElementById(`my-day-${day}`);
             if (selectedWeekdays.includes(day)) {
-                // 빼기 (비활성화)
                 selectedWeekdays = selectedWeekdays.filter(d => d !== day);
                 btn.classList.remove('bg-indigo-100', 'text-indigo-600', 'text-red-500');
                 btn.classList.add('bg-slate-200', 'text-slate-400');
             } else {
-                // 넣기 (활성화)
                 selectedWeekdays.push(day);
                 btn.classList.remove('bg-slate-200', 'text-slate-400');
                 btn.classList.add('bg-indigo-100');
-                if (day === 0) btn.classList.add('text-red-500'); // 일요일은 빨간색
-                else btn.classList.add('text-indigo-600');
+                if (day === 0) btn.classList.add('text-red-500'); else btn.classList.add('text-indigo-600');
             }
         };
 
         window.addMyAvail = async () => {
-            const startStr = document.getElementById('in-my-start-date').value;
-            const endStr = document.getElementById('in-my-end-date').value;
-            const timeStart = document.getElementById('in-my-start').value;
-            const timeEnd = document.getElementById('in-my-end').value;
-
+            const startStr = document.getElementById('in-my-start-date').value, endStr = document.getElementById('in-my-end-date').value;
+            const timeStart = document.getElementById('in-my-start').value, timeEnd = document.getElementById('in-my-end').value;
             if(!startStr || !timeStart || !timeEnd) return alert("시작 날짜와 시간을 입력해 주세요.");
-            
-            // 종료 날짜를 안 적었으면 시작 날짜와 똑같이 맞춥니다 (단일 등록 기능)
             const finalEndStr = endStr ? endStr : startStr;
-
-            let startDt = new Date(startStr);
-            let endDt = new Date(finalEndStr);
-
+            let startDt = new Date(startStr); let endDt = new Date(finalEndStr);
             if (endDt < startDt) return alert("종료 날짜가 시작 날짜보다 빠를 수 없습니다.");
             if (selectedWeekdays.length === 0) return alert("최소 하루 이상의 요일을 선택해 주세요.");
 
-            // 날짜 범위만큼 반복하며 배열(Batch Payload) 만들기
-            const payloads = [];
-            let loopLimit = 365; // 무한루프 방지 안전장치 (최대 1년)
-            
+            const payloads = []; let loopLimit = 365;
             for (let d = new Date(startDt); d <= endDt; d.setDate(d.getDate() + 1)) {
                 if (loopLimit-- < 0) break;
-                // 체크된 요일에만 포함시킵니다!
-                if (selectedWeekdays.includes(d.getDay())) {
-                    payloads.push({
-                        session_id: currentSessionId,
-                        user_id: userState.id,
-                        available_date: d.toISOString().split('T')[0],
-                        start_time: timeStart,
-                        end_time: timeEnd
-                    });
-                }
+                if (selectedWeekdays.includes(d.getDay())) payloads.push({ session_id: currentSessionId, user_id: userState.id, available_date: d.toISOString().split('T')[0], start_time: timeStart, end_time: timeEnd });
             }
-
             if (payloads.length === 0) return alert("해당 기간 내에 선택한 요일이 없습니다.");
-
-            // 배열 전체를 DB에 한 번에 삽입 (서버 최적화)
             const { error } = await client.from('session_availability').insert(payloads);
             if (error) alert("일정 추가 실패: " + error.message); else renderRoom();
         };
 
-        // ==========================================
-        // 기타 유틸 로직
-        // ==========================================
-        function renderTagUI() { document.getElementById('modal-tags-container').innerHTML = AVAILABLE_TAGS.map(tag => { const isSel = currentTags.includes(tag); return `<button type="button" onclick="toggleSessionTag('${tag}')" class="py-1.5 px-3 rounded-xl border-2 text-[10px] font-black hover-base transition-colors ${isSel ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'bg-white border-slate-200 text-slate-400'}">#${tag}</button>`; }).join(''); }
-        window.toggleSessionTag = (tag) => { currentTags = currentTags.includes(tag) ? currentTags.filter(t => t !== tag) : [...currentTags, tag]; renderTagUI(); };
-        window.toggleCustomCap = () => { const isCustom = document.getElementById('in-cap').value === 'custom'; toggle('in-cap-custom', isCustom); toggle('btn-cap-cancel', isCustom); if (isCustom) { document.getElementById('in-cap-custom').value = ''; document.getElementById('in-cap-custom').focus(); } };
-        window.cancelCustomCap = () => { document.getElementById('in-cap').value = '4'; window.toggleCustomCap(); };
-        window.toggleRepeatCount = () => { toggle('in-confirm-count', document.getElementById('in-confirm-repeat').value !== 'none'); };
         window.delMyAvail = async (id) => { await client.from('session_availability').delete().eq('id', id); renderRoom(); };
 
         window.addConfirmedSchedule = async () => {
             const cDate = document.getElementById('in-confirm-date').value, cTime = document.getElementById('in-confirm-time').value;
             const isWeekly = document.getElementById('in-confirm-repeat').value === 'weekly';
             const count = parseInt(document.getElementById('in-confirm-count').value || 1);
-
             if(!cDate || !cTime) return alert("확정할 시작 날짜와 시간을 입력하세요.");
 
             const s = allSessions.find(x => x.id === currentSessionId);
             let scheds = s.confirmed_schedules || [];
             let baseDate = new Date(cDate);
-
             for(let i=0; i<count; i++) {
                 let d = new Date(baseDate);
                 if(isWeekly) d.setDate(d.getDate() + (i * 7)); else if (i > 0) break;
@@ -508,7 +456,6 @@
                 if (!scheds.find(x => x.date === dStr && x.time === cTime)) scheds.push({ date: dStr, time: cTime });
             }
             scheds.sort((a,b) => new Date(a.date) - new Date(b.date));
-
             await client.from('sessions').update({ confirmed_schedules: scheds, status: scheds.length > 0 ? 'confirmed' : 'recruiting' }).eq('id', currentSessionId);
             renderRoom(); 
         };
@@ -526,6 +473,12 @@
             const { error } = await client.from('sessions').delete().eq('id', sId).eq('creator_id', userState.id);
             if (error) alert("삭제 실패: " + error.message); else { toggle('modal-create', false); goLobby(); }
         };
+
+        function renderTagUI() { document.getElementById('modal-tags-container').innerHTML = AVAILABLE_TAGS.map(tag => { const isSel = currentTags.includes(tag); return `<button type="button" onclick="toggleSessionTag('${tag}')" class="py-1.5 px-3 rounded-xl border-2 text-[10px] font-black hover-base transition-colors ${isSel ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'bg-white border-slate-200 text-slate-400'}">#${tag}</button>`; }).join(''); }
+        window.toggleSessionTag = (tag) => { currentTags = currentTags.includes(tag) ? currentTags.filter(t => t !== tag) : [...currentTags, tag]; renderTagUI(); };
+        window.toggleCustomCap = () => { const isCustom = document.getElementById('in-cap').value === 'custom'; toggle('in-cap-custom', isCustom); toggle('btn-cap-cancel', isCustom); if (isCustom) { document.getElementById('in-cap-custom').value = ''; document.getElementById('in-cap-custom').focus(); } };
+        window.cancelCustomCap = () => { document.getElementById('in-cap').value = '4'; window.toggleCustomCap(); };
+        window.toggleRepeatCount = () => { toggle('in-confirm-count', document.getElementById('in-confirm-repeat').value !== 'none'); };
 
         async function updateProfile(user) {
             userState = user;
@@ -552,13 +505,9 @@
         document.getElementById('btn-open-create').onclick = () => { 
             document.getElementById('edit-session-id').value = ""; document.getElementById('modal-title').innerText = "🎲 새 세션 개설"; 
             document.getElementById('in-title').value = ""; document.getElementById('in-rule').value = ""; document.getElementById('in-desc').value = ""; 
-            currentTags = []; renderTagUI();
-            document.getElementById('color-hex-display').innerText = '배너 컬러';
-            document.getElementById('color-hex-display').className = 'text-[10px] text-slate-400 font-mono transition-colors';
-            document.getElementById('in-cap').value = '4'; window.toggleCustomCap(); 
-            toggle('btn-create-delete', false); toggle('modal-create', true); 
+            currentTags = []; renderTagUI(); document.getElementById('color-hex-display').innerText = '배너 컬러'; document.getElementById('color-hex-display').className = 'text-[10px] text-slate-400 font-mono transition-colors';
+            document.getElementById('in-cap').value = '4'; window.toggleCustomCap(); toggle('btn-create-delete', false); toggle('modal-create', true); 
         };
-        
         document.getElementById('btn-create-close').onclick = () => toggle('modal-create', false);
         
         document.getElementById('mode-on').onclick = () => { locType = 'online'; updateLocUI(); };
@@ -568,10 +517,7 @@
         document.getElementById('btn-create-submit').onclick = async () => {
             if (!userState) return;
             let capVal = document.getElementById('in-cap').value;
-            if (capVal === 'custom') {
-                capVal = document.getElementById('in-cap-custom').value;
-                if (!capVal || isNaN(capVal) || capVal < 1) return alert("올바른 인원수를 직접 입력해 주세요.");
-            }
+            if (capVal === 'custom') { capVal = document.getElementById('in-cap-custom').value; if (!capVal || isNaN(capVal) || capVal < 1) return alert("올바른 인원수를 직접 입력해 주세요."); }
             const payload = { title: document.getElementById('in-title').value, rule: document.getElementById('in-rule').value, description: document.getElementById('in-desc').value, capacity: capVal, location_type: locType, location_detail: document.getElementById('in-loc').value, banner_color: document.getElementById('in-color').value, creator_id: userState.id, tags: currentTags };
             const sessionId = document.getElementById('edit-session-id').value;
             const { error } = sessionId ? await client.from('sessions').update(payload).eq('id', sessionId) : await client.from('sessions').insert(payload);
@@ -585,10 +531,8 @@
             document.getElementById('in-title').value = s.title; document.getElementById('in-rule').value = s.rule; document.getElementById('in-desc').value = s.description || ""; document.getElementById('in-loc').value = s.location_detail; document.getElementById('in-color').value = s.banner_color; 
             window.updateColorDisplay(s.banner_color);
             let cap = s.capacity;
-            if (cap >= 1 && cap <= 10) { document.getElementById('in-cap').value = cap; window.toggleCustomCap(); } 
-            else { document.getElementById('in-cap').value = 'custom'; window.toggleCustomCap(); document.getElementById('in-cap-custom').value = cap; }
-            currentTags = s.tags || []; renderTagUI();
-            locType = s.location_type; updateLocUI(); toggle('btn-create-delete', true); toggle('modal-create', true);
+            if (cap >= 1 && cap <= 10) { document.getElementById('in-cap').value = cap; window.toggleCustomCap(); } else { document.getElementById('in-cap').value = 'custom'; window.toggleCustomCap(); document.getElementById('in-cap-custom').value = cap; }
+            currentTags = s.tags || []; renderTagUI(); locType = s.location_type; updateLocUI(); toggle('btn-create-delete', true); toggle('modal-create', true);
         };
 
         window.joinSession = async (sId) => { if (!userState) return alert("로그인 필요!"); await client.from('session_members').insert({ session_id: sId, user_id: userState.id }); renderRoom(); };
