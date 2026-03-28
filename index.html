@@ -105,18 +105,34 @@
 
                 <div class="w-full lg:w-1/3 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200 flex flex-col">
                     <h3 class="text-xl font-black mb-2">📅 내 스케줄 입력</h3>
-                    <p class="text-[10px] text-slate-400 mb-6">가능한 날짜와 세부 시간을 추가해 주세요.</p>
+                    <p class="text-[10px] text-slate-400 mb-6">원하는 기간과 요일을 선택하여 한 번에 추가해 주세요.</p>
                     
                     <div class="flex flex-col gap-2 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">날짜 선택</label>
-                        <input type="date" id="in-my-date" class="w-full bg-white border-2 border-slate-200 p-3 rounded-xl text-sm font-bold outline-none focus:border-indigo-500 mb-2">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">세부 시간 설정</label>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">기간 설정 (하루만 원하면 앞칸만 입력)</label>
+                        <div class="flex gap-2 items-center mb-2">
+                            <input type="date" id="in-my-start-date" class="flex-1 bg-white border-2 border-slate-200 p-2 rounded-xl text-xs font-bold outline-none focus:border-indigo-500">
+                            <span class="text-slate-400 font-bold">~</span>
+                            <input type="date" id="in-my-end-date" class="flex-1 bg-white border-2 border-slate-200 p-2 rounded-xl text-xs font-bold outline-none focus:border-indigo-500" title="비워두면 단일 날짜로 추가됩니다.">
+                        </div>
+
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">반복할 요일 (클릭하여 켜기/끄기)</label>
+                        <div class="flex gap-1 justify-between mb-2">
+                            <button type="button" onclick="toggleMyDay(1)" id="my-day-1" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">월</button>
+                            <button type="button" onclick="toggleMyDay(2)" id="my-day-2" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">화</button>
+                            <button type="button" onclick="toggleMyDay(3)" id="my-day-3" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">수</button>
+                            <button type="button" onclick="toggleMyDay(4)" id="my-day-4" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">목</button>
+                            <button type="button" onclick="toggleMyDay(5)" id="my-day-5" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">금</button>
+                            <button type="button" onclick="toggleMyDay(6)" id="my-day-6" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-indigo-600 transition-colors">토</button>
+                            <button type="button" onclick="toggleMyDay(0)" id="my-day-0" class="w-8 h-8 rounded-full font-black text-[10px] bg-indigo-100 text-red-500 transition-colors">일</button>
+                        </div>
+
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">세부 시간 설정</label>
                         <div class="flex gap-2 items-center mb-4">
                             <input type="time" id="in-my-start" value="19:00" class="flex-1 bg-white border-2 border-slate-200 p-2 rounded-xl text-xs font-bold outline-none focus:border-indigo-500">
                             <span class="text-slate-400 font-bold">~</span>
                             <input type="time" id="in-my-end" value="23:59" class="flex-1 bg-white border-2 border-slate-200 p-2 rounded-xl text-xs font-bold outline-none focus:border-indigo-500">
                         </div>
-                        <button onclick="addMyAvail()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover-base btn-indigo-hover shadow-md">내 일정 추가하기</button>
+                        <button onclick="addMyAvail()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover-base btn-indigo-hover shadow-md">일정 일괄 추가하기</button>
                     </div>
 
                     <div id="my-avail-list" class="space-y-2 mb-6 overflow-y-auto flex-grow max-h-[150px] pr-2"></div>
@@ -210,17 +226,15 @@
 
         const AVAILABLE_TAGS = ['GM리스', 'GMPC', '텍스트세션', '보이스세션', '대면세션', '입문환영', '숙련자추천', '룰북필수', '룰북미소지자가능', '단편(원샷)', '단기(다회차)', '장기/캠페인'];
         let currentTags = [];
+        
+        // [핵심 패치] PL 요일 일괄 선택기 (기본으로 월~일 모두 켜져 있음)
+        let selectedWeekdays = [0, 1, 2, 3, 4, 5, 6]; 
 
         const toggle = (id, show) => document.getElementById(id).classList.toggle('hidden', !show);
         const escapeHTML = (str) => str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-        // ==========================================
-        // [핵심 패치] 스마트 경계 인식 툴팁
-        // ==========================================
         window.showTooltip = (el, title, rawListHTML) => {
             const tt = document.getElementById('global-tooltip');
-            
-            // 1. 내용 주입 (테마 복구)
             tt.innerHTML = `
                 <div class="font-black text-indigo-600 mb-2 border-b border-indigo-50 pb-1 text-center relative z-10 bg-white">${title}</div>
                 <div class="relative z-10 bg-white">${rawListHTML}</div>
@@ -231,20 +245,12 @@
             const rect = el.getBoundingClientRect();
             const ttRect = tt.getBoundingClientRect();
 
-            // 2. 기본 중앙 정렬 계산
             let targetLeft = rect.left + (rect.width / 2) - (ttRect.width / 2);
             let arrowOffset = ttRect.width / 2;
 
-            // 3. 경계(Boundary) 충돌 감지 및 조정
-            if (targetLeft < 10) {
-                targetLeft = 10; // 왼쪽 벽에 닿으면 10px 띄우고 정지
-                arrowOffset = rect.left + (rect.width / 2) - 10; // 화살표 꼬리만 셀을 향해 이동
-            } else if (targetLeft + ttRect.width > window.innerWidth - 10) {
-                targetLeft = window.innerWidth - ttRect.width - 10; // 오른쪽 벽에 닿아도 정지
-                arrowOffset = rect.left + (rect.width / 2) - targetLeft; // 꼬리 이동
-            }
+            if (targetLeft < 10) { targetLeft = 10; arrowOffset = rect.left + (rect.width / 2) - 10; } 
+            else if (targetLeft + ttRect.width > window.innerWidth - 10) { targetLeft = window.innerWidth - ttRect.width - 10; arrowOffset = rect.left + (rect.width / 2) - targetLeft; }
 
-            // 4. 최종 좌표 적용
             tt.style.left = targetLeft + 'px';
             tt.style.top = (rect.top - 10) + 'px';
             document.getElementById('tt-arrow').style.left = arrowOffset + 'px';
@@ -252,33 +258,11 @@
             setTimeout(() => tt.classList.add('opacity-100'), 10);
         };
 
-        window.hideTooltip = () => {
-            const tt = document.getElementById('global-tooltip');
-            tt.classList.remove('opacity-100');
-            tt.classList.add('hidden'); 
-        };
+        window.hideTooltip = () => { const tt = document.getElementById('global-tooltip'); tt.classList.remove('opacity-100'); tt.classList.add('hidden'); };
+        window.updateColorDisplay = (val) => { const display = document.getElementById('color-hex-display'); display.innerText = val.toUpperCase() + ' (확정됨)'; display.classList.replace('text-slate-400', 'text-indigo-600'); display.classList.add('font-black'); };
 
-        window.updateColorDisplay = (val) => {
-            const display = document.getElementById('color-hex-display');
-            display.innerText = val.toUpperCase() + ' (확정됨)';
-            display.classList.replace('text-slate-400', 'text-indigo-600');
-            display.classList.add('font-black');
-        };
-
-        window.goLobby = () => {
-            toggle('view-lobby', true);
-            toggle('view-room', false);
-            currentSessionId = null;
-            renderLobby();
-        };
-
-        window.goRoom = async (sId) => {
-            if (!userState) return alert("로그인 후 방에 입장할 수 있습니다.");
-            currentSessionId = sId;
-            toggle('view-lobby', false);
-            toggle('view-room', true);
-            await renderRoom();
-        };
+        window.goLobby = () => { toggle('view-lobby', true); toggle('view-room', false); currentSessionId = null; renderLobby(); };
+        window.goRoom = async (sId) => { if (!userState) return alert("로그인 후 방에 입장할 수 있습니다."); currentSessionId = sId; toggle('view-lobby', false); toggle('view-room', true); await renderRoom(); };
 
         async function fetchGlobalData() {
             const [sessRes, memRes] = await Promise.all([
@@ -307,18 +291,13 @@
                 let eventsHTML = '';
                 allSessions.forEach(s => {
                     const matches = (s.confirmed_schedules || []).filter(x => x.date === dateStr);
-                    matches.forEach(m => {
-                        eventsHTML += `<div class="text-[9px] text-white truncate px-1.5 py-0.5 mt-1 rounded-md shadow-sm font-bold" style="background-color: ${s.banner_color || '#4f46e5'}">${m.time} ${s.title}</div>`;
-                    });
+                    matches.forEach(m => { eventsHTML += `<div class="text-[9px] text-white truncate px-1.5 py-0.5 mt-1 rounded-md shadow-sm font-bold" style="background-color: ${s.banner_color || '#4f46e5'}">${m.time} ${s.title}</div>`; });
                 });
                 calGrid.innerHTML += `<div class="cal-day"><span class="text-xs font-bold text-slate-600 mb-1">${d}</span><div class="flex-grow overflow-hidden">${eventsHTML}</div></div>`;
             }
 
             const grid = document.getElementById('session-grid');
-            if(allSessions.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-400 italic">개설된 세션이 없습니다.</div>`;
-                return;
-            }
+            if(allSessions.length === 0) return grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-400 italic">개설된 세션이 없습니다.</div>`;
 
             grid.innerHTML = allSessions.map(s => {
                 const members = allMembers.filter(m => m.session_id === s.id);
@@ -326,17 +305,12 @@
                 const tags = s.tags || [];
                 const hashtagHTML = tags.map(t => `<span class="text-[10px] font-black text-white drop-shadow-sm ml-1.5">#${t}</span>`).join('');
                 const gmLabel = tags.includes('GM리스') ? 'Creator' : 'GM';
-                const statusBadge = (s.confirmed_schedules && s.confirmed_schedules.length > 0) 
-                    ? `<span class="bg-green-100 text-green-700 badge-status">일정 확정</span>` 
-                    : `<span class="bg-indigo-100 text-indigo-700 badge-status">모집 중</span>`;
+                const statusBadge = (s.confirmed_schedules && s.confirmed_schedules.length > 0) ? `<span class="bg-green-100 text-green-700 badge-status">일정 확정</span>` : `<span class="bg-indigo-100 text-indigo-700 badge-status">모집 중</span>`;
 
                 return `
                 <div onclick="goRoom('${s.id}')" class="session-card bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col text-left relative">
                     <div style="background-color: ${s.banner_color || '#4f46e5'}" class="min-h-[6.5rem] w-full p-5 flex flex-col justify-between">
-                        <div class="flex justify-between items-start">
-                            <span class="bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase border border-white/30 tracking-widest shadow-sm">${s.location_type}</span>
-                            ${statusBadge}
-                        </div>
+                        <div class="flex justify-between items-start"><span class="bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase border border-white/30 tracking-widest shadow-sm">${s.location_type}</span>${statusBadge}</div>
                         <div class="flex flex-wrap justify-end gap-y-1 mt-2">${hashtagHTML}</div>
                     </div>
                     <div class="p-6 flex-grow flex flex-col">
@@ -366,10 +340,7 @@
                 <div class="absolute inset-0 opacity-10" style="background-color: ${s.banner_color || '#4f46e5'}"></div>
                 <div class="relative z-10">
                     <div class="flex justify-between items-start mb-4">
-                        <div class="flex gap-2 flex-wrap">
-                            <span class="bg-indigo-100 text-indigo-700 text-[10px] font-black px-3 py-1 rounded-full uppercase">${s.location_type}</span>
-                            ${tags.map(t => `<span class="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1 rounded-full">#${t}</span>`).join('')}
-                        </div>
+                        <div class="flex gap-2 flex-wrap"><span class="bg-indigo-100 text-indigo-700 text-[10px] font-black px-3 py-1 rounded-full uppercase">${s.location_type}</span>${tags.map(t => `<span class="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1 rounded-full">#${t}</span>`).join('')}</div>
                         ${isGM ? `<button onclick="openEditModal('${s.id}')" class="bg-white border text-xs px-3 py-1 rounded-lg hover:bg-slate-50 font-bold hover-base shadow-sm">⚙️ 방 설정</button>` : ''}
                     </div>
                     <h2 class="text-3xl font-black mb-2 text-slate-800">${s.title} <span class="text-sm text-indigo-500">(${s.rule})</span></h2>
@@ -378,11 +349,7 @@
                     
                     <div class="flex items-center gap-4 bg-white/50 p-3 rounded-xl border border-white/50 w-fit backdrop-blur-sm">
                         <span class="text-xs font-bold text-slate-500">PL 정원: ${members.length} / ${s.capacity}명</span>
-                        ${isGM 
-                            ? `<span class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg text-xs font-black border border-indigo-100 shadow-sm cursor-default">👑 방장 (자동참여)</span>` 
-                            : (!isJoined && members.length < s.capacity 
-                                ? `<button onclick="joinSession('${s.id}')" class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover-base btn-indigo-hover shadow-md">방 참여하기</button>` 
-                                : (isJoined ? `<button onclick="leaveSession('${s.id}')" class="bg-red-50 text-red-500 px-4 py-1.5 rounded-lg text-xs font-bold border border-red-100 hover-base">참여 취소</button>` : ''))}
+                        ${isGM ? `<span class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-lg text-xs font-black border border-indigo-100 shadow-sm cursor-default">👑 방장 (자동참여)</span>` : (!isJoined && members.length < s.capacity ? `<button onclick="joinSession('${s.id}')" class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover-base btn-indigo-hover shadow-md">방 참여하기</button>` : (isJoined ? `<button onclick="leaveSession('${s.id}')" class="bg-red-50 text-red-500 px-4 py-1.5 rounded-lg text-xs font-bold border border-red-100 hover-base">참여 취소</button>` : ''))}
                     </div>
                 </div>
             `;
@@ -390,9 +357,7 @@
             toggle('gm-control-panel', isGM);
             
             const scheds = s.confirmed_schedules || [];
-            document.getElementById('confirmed-schedules-list').innerHTML = scheds.length === 0 
-                ? `<div class="text-[10px] text-slate-400 italic py-2">확정된 일정이 없습니다.</div>` 
-                : scheds.map((sc, idx) => `
+            document.getElementById('confirmed-schedules-list').innerHTML = scheds.length === 0 ? `<div class="text-[10px] text-slate-400 italic py-2">확정된 일정이 없습니다.</div>` : scheds.map((sc, idx) => `
                 <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm text-xs">
                     <span class="font-bold text-slate-600">${sc.date} <span class="text-indigo-500 ml-1">${sc.time}</span></span>
                     <button onclick="removeConfirmedSchedule(${idx})" class="text-slate-300 hover:text-red-500 font-black px-1 text-sm">×</button>
@@ -434,10 +399,7 @@
                 const weekday = dateObj.toLocaleDateString('ko-KR', {weekday:'short'});
                 
                 const titleStr = `${month}월 ${day}일 (${weekday}) 상세`;
-                
-                // [테마 복구] bg-white와 indigo 텍스트
                 const listHTML = dayAvails.map(a => `<div class="flex justify-between border-b border-indigo-50 pb-1 mb-1 last:border-0 gap-4 bg-white relative z-10"><span class="font-bold text-slate-700">${a.users.nickname}</span><span class="text-indigo-500 tracking-wider font-mono font-bold">${a.start_time.slice(0,5)}~${a.end_time.slice(0,5)}</span></div>`).join('');
-                
                 const safeListStr = escapeHTML(listHTML);
 
                 return `
@@ -456,31 +418,76 @@
             toggleContainer.innerHTML = uniqueUsers.map(u => `<img src="${u.avatar_url}" class="w-6 h-6 rounded-full border-2 border-slate-100 shadow-sm" title="${u.nickname}">`).join('');
         }
 
-        function renderTagUI() {
-            document.getElementById('modal-tags-container').innerHTML = AVAILABLE_TAGS.map(tag => {
-                const isSel = currentTags.includes(tag);
-                return `<button type="button" onclick="toggleSessionTag('${tag}')" class="py-1.5 px-3 rounded-xl border-2 text-[10px] font-black hover-base transition-colors ${isSel ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'bg-white border-slate-200 text-slate-400'}">#${tag}</button>`;
-            }).join('');
-        }
-
-        window.toggleSessionTag = (tag) => { currentTags = currentTags.includes(tag) ? currentTags.filter(t => t !== tag) : [...currentTags, tag]; renderTagUI(); };
-
-        window.toggleCustomCap = () => {
-            const isCustom = document.getElementById('in-cap').value === 'custom';
-            toggle('in-cap-custom', isCustom); toggle('btn-cap-cancel', isCustom);
-            if (isCustom) { document.getElementById('in-cap-custom').value = ''; document.getElementById('in-cap-custom').focus(); }
+        // ==========================================
+        // [핵심 패치] PL 요일 일괄 추가 엔진
+        // ==========================================
+        window.toggleMyDay = (day) => {
+            const btn = document.getElementById(`my-day-${day}`);
+            if (selectedWeekdays.includes(day)) {
+                // 빼기 (비활성화)
+                selectedWeekdays = selectedWeekdays.filter(d => d !== day);
+                btn.classList.remove('bg-indigo-100', 'text-indigo-600', 'text-red-500');
+                btn.classList.add('bg-slate-200', 'text-slate-400');
+            } else {
+                // 넣기 (활성화)
+                selectedWeekdays.push(day);
+                btn.classList.remove('bg-slate-200', 'text-slate-400');
+                btn.classList.add('bg-indigo-100');
+                if (day === 0) btn.classList.add('text-red-500'); // 일요일은 빨간색
+                else btn.classList.add('text-indigo-600');
+            }
         };
 
-        window.cancelCustomCap = () => { document.getElementById('in-cap').value = '4'; window.toggleCustomCap(); };
-        window.toggleRepeatCount = () => { toggle('in-confirm-count', document.getElementById('in-confirm-repeat').value !== 'none'); };
-
         window.addMyAvail = async () => {
-            const date = document.getElementById('in-my-date').value, start = document.getElementById('in-my-start').value, end = document.getElementById('in-my-end').value;
-            if(!date || !start || !end) return alert("날짜와 시작/종료 시간을 모두 선택해 주세요!");
-            const { error } = await client.from('session_availability').insert({ session_id: currentSessionId, user_id: userState.id, available_date: date, start_time: start, end_time: end });
+            const startStr = document.getElementById('in-my-start-date').value;
+            const endStr = document.getElementById('in-my-end-date').value;
+            const timeStart = document.getElementById('in-my-start').value;
+            const timeEnd = document.getElementById('in-my-end').value;
+
+            if(!startStr || !timeStart || !timeEnd) return alert("시작 날짜와 시간을 입력해 주세요.");
+            
+            // 종료 날짜를 안 적었으면 시작 날짜와 똑같이 맞춥니다 (단일 등록 기능)
+            const finalEndStr = endStr ? endStr : startStr;
+
+            let startDt = new Date(startStr);
+            let endDt = new Date(finalEndStr);
+
+            if (endDt < startDt) return alert("종료 날짜가 시작 날짜보다 빠를 수 없습니다.");
+            if (selectedWeekdays.length === 0) return alert("최소 하루 이상의 요일을 선택해 주세요.");
+
+            // 날짜 범위만큼 반복하며 배열(Batch Payload) 만들기
+            const payloads = [];
+            let loopLimit = 365; // 무한루프 방지 안전장치 (최대 1년)
+            
+            for (let d = new Date(startDt); d <= endDt; d.setDate(d.getDate() + 1)) {
+                if (loopLimit-- < 0) break;
+                // 체크된 요일에만 포함시킵니다!
+                if (selectedWeekdays.includes(d.getDay())) {
+                    payloads.push({
+                        session_id: currentSessionId,
+                        user_id: userState.id,
+                        available_date: d.toISOString().split('T')[0],
+                        start_time: timeStart,
+                        end_time: timeEnd
+                    });
+                }
+            }
+
+            if (payloads.length === 0) return alert("해당 기간 내에 선택한 요일이 없습니다.");
+
+            // 배열 전체를 DB에 한 번에 삽입 (서버 최적화)
+            const { error } = await client.from('session_availability').insert(payloads);
             if (error) alert("일정 추가 실패: " + error.message); else renderRoom();
         };
 
+        // ==========================================
+        // 기타 유틸 로직
+        // ==========================================
+        function renderTagUI() { document.getElementById('modal-tags-container').innerHTML = AVAILABLE_TAGS.map(tag => { const isSel = currentTags.includes(tag); return `<button type="button" onclick="toggleSessionTag('${tag}')" class="py-1.5 px-3 rounded-xl border-2 text-[10px] font-black hover-base transition-colors ${isSel ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'bg-white border-slate-200 text-slate-400'}">#${tag}</button>`; }).join(''); }
+        window.toggleSessionTag = (tag) => { currentTags = currentTags.includes(tag) ? currentTags.filter(t => t !== tag) : [...currentTags, tag]; renderTagUI(); };
+        window.toggleCustomCap = () => { const isCustom = document.getElementById('in-cap').value === 'custom'; toggle('in-cap-custom', isCustom); toggle('btn-cap-cancel', isCustom); if (isCustom) { document.getElementById('in-cap-custom').value = ''; document.getElementById('in-cap-custom').focus(); } };
+        window.cancelCustomCap = () => { document.getElementById('in-cap').value = '4'; window.toggleCustomCap(); };
+        window.toggleRepeatCount = () => { toggle('in-confirm-count', document.getElementById('in-confirm-repeat').value !== 'none'); };
         window.delMyAvail = async (id) => { await client.from('session_availability').delete().eq('id', id); renderRoom(); };
 
         window.addConfirmedSchedule = async () => {
