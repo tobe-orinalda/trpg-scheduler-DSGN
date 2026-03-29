@@ -64,12 +64,42 @@
     <main class="container mx-auto mt-4 md:mt-8 p-3 md:p-4">
         <div id="view-lobby" class="block">
             <section class="mb-8 md:mb-12">
-                <div class="flex justify-between items-center mb-6 md:mb-8 bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4 md:mb-6 bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-slate-200">
                     <h2 class="text-lg md:text-2xl font-black">📌 모집 중인 세션</h2>
                     <button id="btn-open-create" class="bg-indigo-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl font-bold shadow-lg hover-base btn-indigo-hover text-sm md:text-base">+ 열기</button>
                 </div>
+
+                <div class="mb-6 md:mb-8 bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-slate-200">
+                    <div class="relative mb-4">
+                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none opacity-50">🔍</div>
+                        <input type="text" id="f-keyword" oninput="updateFilters()" placeholder="세션 제목 또는 룰 이름으로 검색..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold text-xs md:text-sm outline-none focus:border-indigo-500 transition-colors">
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                        <div class="flex gap-1.5 md:gap-2">
+                            <button id="f-loc-all" onclick="setFilterLoc('all')" class="px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-[10px] md:text-xs font-bold bg-indigo-600 text-white transition-colors">전체 장소</button>
+                            <button id="f-loc-online" onclick="setFilterLoc('online')" class="px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-[10px] md:text-xs font-bold bg-slate-100 text-slate-500 transition-colors">온라인</button>
+                            <button id="f-loc-offline" onclick="setFilterLoc('offline')" class="px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-[10px] md:text-xs font-bold bg-slate-100 text-slate-500 transition-colors">오프라인</button>
+                        </div>
+                        
+                        <label class="flex items-center gap-2 cursor-pointer bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors">
+                            <input type="checkbox" id="f-status" onchange="updateFilters()" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer">
+                            <span class="text-[10px] md:text-xs font-black text-slate-600">모집 중인 세션만 보기</span>
+                        </label>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-slate-100">
+                        <div class="text-[9px] font-bold text-slate-400 mb-2 uppercase tracking-widest flex justify-between items-end">
+                            <span>해시태그 필터 (선택한 태그를 모두 포함하는 세션만 표시)</span>
+                            <button onclick="clearFilterTags()" class="text-indigo-400 hover:text-indigo-600 underline">초기화</button>
+                        </div>
+                        <div id="filter-tags-container" class="flex flex-wrap gap-1.5 md:gap-2"></div>
+                    </div>
+                </div>
+
                 <div id="session-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8"></div>
             </section>
+
             <section class="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-4 md:mb-6">
                     <h2 class="text-lg md:text-2xl font-black">🗓️ 마스터 캘린더</h2>
@@ -108,7 +138,6 @@
                 <div class="space-y-4 mb-8 text-left text-sm">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <input type="text" id="in-title" placeholder="세션 제목" class="w-full p-3 md:p-4 bg-slate-50 border-2 rounded-xl md:rounded-2xl outline-none font-bold">
-                        
                         <div class="relative w-full flex gap-2">
                             <select id="in-rule-primary" onchange="handleRuleSelection('primary')" class="w-full p-3 md:p-4 bg-slate-50 border-2 rounded-xl md:rounded-2xl font-bold outline-none appearance-none text-xs md:text-sm">
                                 <option value="" disabled selected>사용 룰 선택</option>
@@ -122,15 +151,11 @@
                                 <option value="show_all" class="text-indigo-600 font-black">📜 전체 정발 룰 목록 보기...</option>
                                 <option value="custom" class="text-slate-500 font-black">✏️ 기타 (직접 입력)...</option>
                             </select>
-
                             <select id="in-rule-all" onchange="handleRuleSelection('all')" class="hidden w-full p-3 md:p-4 border-2 border-indigo-200 bg-indigo-50 text-indigo-800 rounded-xl md:rounded-2xl font-bold outline-none appearance-none text-xs md:text-sm shadow-inner"></select>
-
                             <input type="text" id="in-rule-custom" placeholder="룰 이름을 직접 적어주세요" class="hidden absolute inset-0 w-full h-full p-3 md:p-4 bg-white border-2 border-indigo-500 rounded-xl md:rounded-2xl font-bold outline-none text-xs md:text-sm">
-
                             <button id="btn-rule-cancel" type="button" onclick="resetRuleUI()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 font-black p-2 bg-white rounded-full z-10 shadow-sm border border-slate-100" title="기본 선택으로 돌아가기">×</button>
                         </div>
                     </div>
-
                     <div class="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-slate-100">
                         <label class="text-[9px] font-bold text-slate-400 mb-2 block uppercase tracking-widest">세션 키워드</label>
                         <div id="modal-tags-container" class="flex flex-wrap gap-1.5 md:gap-2"></div>
@@ -172,57 +197,109 @@
     <script>
         const S_URL = 'https://eebjvpvwakjumkanohzs.supabase.co', S_KEY = 'sb_publishable_Rlck6NADMmEyIRBz4kua5Q_izgzKAPO';
         const client = supabase.createClient(S_URL, S_KEY);
-        let userState = null, locType = 'online', allSessions = [], allMembers = [], currentSessionId = null, masterDate = new Date(), currentTags = [], selectedWeekdays = [0, 1, 2, 3, 4, 5, 6], roomAvailsCache = [];
-        const AVAILABLE_TAGS = ['GM리스', 'GMPC', '텍스트세션', '보이스세션', '대면세션', '입문환영', '숙련자추천', '룰북필수', '룰북미소지자가능', '단편(원샷)', '단기(다회차)', '장기/캠페인'];
+        let userState = null, locType = 'online', allSessions = [], allMembers = [], currentSessionId = null, masterDate = new Date(), roomAvailsCache = [];
         
-        // [핵심 패치] 뚜비 디렉터님이 하사하신 완벽한 48종 정발 룰북 DB
+        const AVAILABLE_TAGS = ['GM리스', 'GMPC', '텍스트세션', '보이스세션', '대면세션', '입문환영', '숙련자추천', '룰북필수', '룰북미소지자가능', '단편(원샷)', '단기(다회차)', '장기/캠페인'];
         const ALL_RULES_DB = ['가부키쵸 전설 나이트 버터플라이', '거점방어 좀비라인', '건독 리바이스드', '겁스(GURPS)', '누메네라', '다이얼렉트', '더블크로스(Double Cross)', '던전 앤 드래곤(D&D 5e)', '던전월드', '두려움 그 자체', '둘이서 수사', '로그 호라이즌', '마기카로기아(마기로기)', '마우스가드(Mouse Guard)', '마이크로스코프', '밤의 검은 사자들', '밤의 마녀들', '뱀파이어 더 마스커레이드(VtM)', '베센(VAESEN)', '비밀요원국', '사이버 퍼밀리어', '스파이어(SPIRE)', '스프롤(SPRAWL)', '시노비가미', '아곤', '아론의 사제', '어둠 속의 칼날', '언성듀엣', '여왕을 위하여', '울타리 너머', '은검의 스텔라 나이츠', '인세인(inSANe)', '잿불 속의 군단', '전광세계 배스천랜드', '제13시대', '취록의 플로리아', '크로스레터', '크툴루 컨피덴셜', '크툴루의 부름(CoC)', '트래블러(Traveler)', '팀 셜록(TEAM Sherlock)', '포도원의 파수견', '포지드 인 던전', '폴라리스', '프로키온의 무법자들', '피카레스크 로망', '피아스코', '화려한 괴도 팬터미즘(Phantomism)'];
+
+        // [핵심 패치] 필터링 상태(State) 센터
+        let currentTags = []; // 모달(세션 생성)용 태그
+        let filterKeyword = "";
+        let filterLoc = "all";
+        let filterStatus = false;
+        let filterTags = []; // 로비 필터링용 태그
 
         const toggle = (id, show) => document.getElementById(id).classList.toggle('hidden', !show);
         const escapeHTML = (str) => str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         const timeToPercent = (tS) => { const [h, m] = tS.split(':').map(Number); return ((h + (m / 60)) / 24) * 100; };
 
-        // DOM 초기화 시 전체 룰 리스트 주입
         document.addEventListener("DOMContentLoaded", () => {
             const ruleAllSelect = document.getElementById('in-rule-all');
             ruleAllSelect.innerHTML = `<option value="" disabled selected>전체 정발 룰 48종</option>` + ALL_RULES_DB.map(r => `<option value="${r}">${r}</option>`).join('') + `<option disabled>─────────</option><option value="custom" class="font-black text-slate-500">✏️ 목록에 없음 (직접 입력)...</option>`;
+            renderFilterTagsUI();
         });
 
-        // [핵심 패치] 3단계 룰 셀렉터 엔진
-        window.handleRuleSelection = (source) => {
-            const primary = document.getElementById('in-rule-primary'), all = document.getElementById('in-rule-all');
-            const custom = document.getElementById('in-rule-custom'), cancelBtn = document.getElementById('btn-rule-cancel');
-            let val = source === 'primary' ? primary.value : all.value;
+        // [핵심 패치] 필터링 파이프라인 함수군
+        window.updateFilters = () => {
+            filterKeyword = document.getElementById('f-keyword').value.toLowerCase();
+            filterStatus = document.getElementById('f-status').checked;
+            renderLobbyGrid(); // 전체 데이터를 다시 불러오지 않고 로컬 데이터만 재렌더링 (Zero-Refresh)
+        };
 
-            if (val === 'show_all') {
-                primary.classList.add('hidden'); all.classList.remove('hidden'); cancelBtn.classList.remove('hidden'); all.value = "";
-            } else if (val === 'custom') {
-                primary.classList.add('hidden'); all.classList.add('hidden'); custom.classList.remove('hidden'); cancelBtn.classList.remove('hidden'); custom.focus();
-            } else if (source === 'all' && val) {
-                cancelBtn.classList.remove('hidden'); // 전체 목록에서 골랐을 때도 돌아가기 버튼 유지
+        window.setFilterLoc = (loc) => {
+            filterLoc = loc;
+            ['all', 'online', 'offline'].forEach(l => {
+                const btn = document.getElementById(`f-loc-${l}`);
+                if (l === loc) { btn.classList.add('bg-indigo-600', 'text-white'); btn.classList.remove('bg-slate-100', 'text-slate-500'); } 
+                else { btn.classList.add('bg-slate-100', 'text-slate-500'); btn.classList.remove('bg-indigo-600', 'text-white'); }
+            });
+            renderLobbyGrid();
+        };
+
+        window.renderFilterTagsUI = () => {
+            document.getElementById('filter-tags-container').innerHTML = AVAILABLE_TAGS.map(tag => {
+                const isS = filterTags.includes(tag);
+                return `<button type="button" onclick="toggleLobbyFilterTag('${tag}')" class="py-1 md:py-1.5 px-2 md:px-3 rounded-lg md:rounded-xl border-2 text-[9px] md:text-[10px] font-black transition-colors ${isS ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'bg-white border-slate-200 text-slate-400'}">#${tag}</button>`;
+            }).join('');
+        };
+
+        window.toggleLobbyFilterTag = (tag) => {
+            if (filterTags.includes(tag)) filterTags = filterTags.filter(t => t !== tag);
+            else filterTags.push(tag);
+            renderFilterTagsUI();
+            renderLobbyGrid();
+        };
+
+        window.clearFilterTags = () => { filterTags = []; renderFilterTagsUI(); renderLobbyGrid(); };
+
+        // [핵심 패치] 로비 그리드 렌더링 (필터링 로직 분리)
+        function renderLobbyGrid() {
+            const grid = document.getElementById('session-grid');
+            if(allSessions.length === 0) return grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-400 italic">개설된 세션이 없습니다.</div>`;
+            
+            // 4단계 정수 파이프라인
+            const filteredSessions = allSessions.filter(s => {
+                // 1. 텍스트 매칭
+                if (filterKeyword) {
+                    const titleMatch = s.title.toLowerCase().includes(filterKeyword);
+                    const ruleMatch = (s.rule || '').toLowerCase().includes(filterKeyword);
+                    if (!titleMatch && !ruleMatch) return false;
+                }
+                // 2. 장소 매칭
+                if (filterLoc !== 'all' && s.location_type !== filterLoc) return false;
+                
+                // 3. 태그 교집합 (AND)
+                if (filterTags.length > 0) {
+                    const sTags = s.tags || [];
+                    const hasAllTags = filterTags.every(t => sTags.includes(t));
+                    if (!hasAllTags) return false;
+                }
+
+                // 4. 상태 매칭
+                const mbs = allMembers.filter(m => m.session_id === s.id);
+                const isFull = mbs.length >= s.capacity;
+                const isConfirmed = s.confirmed_schedules && s.confirmed_schedules.length > 0;
+                if (filterStatus && (isFull || isConfirmed)) return false;
+
+                return true;
+            });
+
+            if (filteredSessions.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-16 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200"><div class="text-4xl mb-3 opacity-50">🔍</div><p class="text-sm font-bold text-slate-500">조건에 맞는 세션이 없습니다.</p><p class="text-[10px] text-slate-400 mt-1">검색어나 필터를 조절해 보세요.</p></div>`;
+                return;
             }
-        };
 
-        window.resetRuleUI = () => {
-            const primary = document.getElementById('in-rule-primary'), all = document.getElementById('in-rule-all');
-            const custom = document.getElementById('in-rule-custom'), cancelBtn = document.getElementById('btn-rule-cancel');
-            primary.value = ""; primary.classList.remove('hidden');
-            all.classList.add('hidden'); all.value = "";
-            custom.classList.add('hidden'); custom.value = "";
-            cancelBtn.classList.add('hidden');
-        };
+            grid.innerHTML = filteredSessions.map(s => {
+                const mbs = allMembers.filter(m => m.session_id === s.id), isFull = mbs.length >= s.capacity;
+                const hHTML = (s.tags || []).map(t => `<span class="text-[9px] md:text-[10px] font-black text-white drop-shadow-sm ml-1.5">#${t}</span>`).join('');
+                const sBadge = (s.confirmed_schedules && s.confirmed_schedules.length > 0) ? `<span class="bg-green-100 text-green-700 badge-status">일정 확정</span>` : `<span class="bg-indigo-100 text-indigo-700 badge-status">모집 중</span>`;
+                return `<div onclick="goRoom('${s.id}')" class="session-card bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col text-left"><div style="background-color: ${s.banner_color || '#4f46e5'}" class="min-h-[5.5rem] md:min-h-[6.5rem] w-full p-4 md:p-5 flex flex-col justify-between"><div class="flex justify-between items-start"><span class="bg-white/20 backdrop-blur-md text-white text-[8px] md:text-[9px] font-black px-2 md:px-3 py-1 rounded-full uppercase border border-white/30 tracking-widest shadow-sm">${s.location_type}</span>${sBadge}</div><div class="flex flex-wrap justify-end gap-y-0.5 md:gap-y-1 mt-1.5 md:mt-2">${hHTML}</div></div><div class="p-5 md:p-6 flex-grow flex flex-col"><p class="text-[9px] md:text-[10px] font-black text-indigo-500 mb-0.5 md:mb-1 tracking-tighter uppercase">${s.rule || '자유 룰'}</p><h4 class="text-sm md:text-base font-black text-slate-800 mb-2 line-clamp-2 leading-tight">${s.title}</h4><div class="mt-auto pt-4 flex justify-between items-center"><span class="text-[9px] md:text-[10px] font-bold text-slate-500">GM: ${s.creator?.nickname || '알 수 없음'}</span><span class="text-[10px] md:text-[11px] font-black ${isFull ? 'text-red-400' : 'text-slate-400'}">👤 ${mbs.length}/${s.capacity}</span></div></div></div>`;
+            }).join('');
+        }
 
-        window.showTooltip = (el, title, rawListHTML) => {
-            const tt = document.getElementById('global-tooltip');
-            tt.innerHTML = `<div class="font-black text-indigo-600 mb-2 border-b border-indigo-50 pb-1 text-center relative z-10 bg-white">${title}</div><div class="relative z-10 bg-white">${rawListHTML}</div><div id="tt-arrow" class="absolute -bottom-1.5 w-3 h-3 bg-white border-b-2 border-r-2 border-indigo-100 rotate-45 transform -translate-x-1/2" style="left: 50%;"></div>`;
-            tt.classList.remove('hidden');
-            const rect = el.getBoundingClientRect(); const ttRect = tt.getBoundingClientRect();
-            let targetLeft = rect.left + (rect.width / 2) - (ttRect.width / 2); let arrowOffset = ttRect.width / 2;
-            if (targetLeft < 10) { targetLeft = 10; arrowOffset = rect.left + (rect.width / 2) - 10; } 
-            else if (targetLeft + ttRect.width > window.innerWidth - 10) { targetLeft = window.innerWidth - ttRect.width - 10; arrowOffset = rect.left + (rect.width / 2) - targetLeft; }
-            tt.style.left = targetLeft + 'px'; tt.style.top = (window.scrollY + rect.top - 10) + 'px'; document.getElementById('tt-arrow').style.left = arrowOffset + 'px';
-            setTimeout(() => tt.classList.add('opacity-100'), 10);
-        };
+        window.handleRuleSelection = (source) => { const primary = document.getElementById('in-rule-primary'), all = document.getElementById('in-rule-all'); const custom = document.getElementById('in-rule-custom'), cancelBtn = document.getElementById('btn-rule-cancel'); let val = source === 'primary' ? primary.value : all.value; if (val === 'show_all') { primary.classList.add('hidden'); all.classList.remove('hidden'); cancelBtn.classList.remove('hidden'); all.value = ""; } else if (val === 'custom') { primary.classList.add('hidden'); all.classList.add('hidden'); custom.classList.remove('hidden'); cancelBtn.classList.remove('hidden'); custom.focus(); } else if (source === 'all' && val) { cancelBtn.classList.remove('hidden'); } };
+        window.resetRuleUI = () => { const primary = document.getElementById('in-rule-primary'), all = document.getElementById('in-rule-all'); const custom = document.getElementById('in-rule-custom'), cancelBtn = document.getElementById('btn-rule-cancel'); primary.value = ""; primary.classList.remove('hidden'); all.classList.add('hidden'); all.value = ""; custom.classList.add('hidden'); custom.value = ""; cancelBtn.classList.add('hidden'); };
+        window.showTooltip = (el, title, rawListHTML) => { const tt = document.getElementById('global-tooltip'); tt.innerHTML = `<div class="font-black text-indigo-600 mb-2 border-b border-indigo-50 pb-1 text-center relative z-10 bg-white">${title}</div><div class="relative z-10 bg-white">${rawListHTML}</div><div id="tt-arrow" class="absolute -bottom-1.5 w-3 h-3 bg-white border-b-2 border-r-2 border-indigo-100 rotate-45 transform -translate-x-1/2" style="left: 50%;"></div>`; tt.classList.remove('hidden'); const rect = el.getBoundingClientRect(); const ttRect = tt.getBoundingClientRect(); let targetLeft = rect.left + (rect.width / 2) - (ttRect.width / 2); let arrowOffset = ttRect.width / 2; if (targetLeft < 10) { targetLeft = 10; arrowOffset = rect.left + (rect.width / 2) - 10; } else if (targetLeft + ttRect.width > window.innerWidth - 10) { targetLeft = window.innerWidth - ttRect.width - 10; arrowOffset = rect.left + (rect.width / 2) - targetLeft; } tt.style.left = targetLeft + 'px'; tt.style.top = (window.scrollY + rect.top - 10) + 'px'; document.getElementById('tt-arrow').style.left = arrowOffset + 'px'; setTimeout(() => tt.classList.add('opacity-100'), 10); };
         window.hideTooltip = () => { const tt = document.getElementById('global-tooltip'); tt.classList.remove('opacity-100'); tt.classList.add('hidden'); };
         document.addEventListener('touchstart', (e) => { if (!e.target.closest('.heatmap-cell') && !e.target.closest('#global-tooltip')) hideTooltip(); }, {passive: true});
         document.addEventListener('mousedown', (e) => { if (!e.target.closest('.heatmap-cell') && !e.target.closest('#global-tooltip')) hideTooltip(); });
@@ -241,6 +318,7 @@
 
         async function renderLobby() {
             await fetchGlobalData();
+            // 캘린더 렌더링 로직 (마스터 캘린더는 필터 영향 안 받음)
             const year = masterDate.getFullYear(), month = masterDate.getMonth();
             document.getElementById('master-month-title').innerText = `${year}.${String(month + 1).padStart(2, '0')}`;
             const firstDay = new Date(year, month, 1).getDay(), lastDate = new Date(year, month + 1, 0).getDate();
@@ -252,14 +330,8 @@
                 allSessions.forEach(s => { (s.confirmed_schedules || []).filter(x => x.date === dateStr).forEach(m => { eH += `<div class="text-[7px] md:text-[9px] text-white truncate px-1 py-0.5 mt-0.5 md:mt-1 rounded shadow-sm font-bold" style="background-color: ${s.banner_color || '#4f46e5'}">${m.time}</div>`; }); });
                 calGrid.innerHTML += `<div class="cal-day"><span class="text-[9px] md:text-xs font-bold text-slate-600 mb-0.5">${d}</span><div class="flex-grow overflow-hidden">${eH}</div></div>`;
             }
-            const grid = document.getElementById('session-grid');
-            if(allSessions.length === 0) return grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-400 italic">개설된 세션이 없습니다.</div>`;
-            grid.innerHTML = allSessions.map(s => {
-                const mbs = allMembers.filter(m => m.session_id === s.id), isFull = mbs.length >= s.capacity;
-                const hHTML = (s.tags || []).map(t => `<span class="text-[9px] md:text-[10px] font-black text-white drop-shadow-sm ml-1.5">#${t}</span>`).join('');
-                const sBadge = (s.confirmed_schedules && s.confirmed_schedules.length > 0) ? `<span class="bg-green-100 text-green-700 badge-status">일정 확정</span>` : `<span class="bg-indigo-100 text-indigo-700 badge-status">모집 중</span>`;
-                return `<div onclick="goRoom('${s.id}')" class="session-card bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col text-left"><div style="background-color: ${s.banner_color || '#4f46e5'}" class="min-h-[5.5rem] md:min-h-[6.5rem] w-full p-4 md:p-5 flex flex-col justify-between"><div class="flex justify-between items-start"><span class="bg-white/20 backdrop-blur-md text-white text-[8px] md:text-[9px] font-black px-2 md:px-3 py-1 rounded-full uppercase border border-white/30 tracking-widest shadow-sm">${s.location_type}</span>${sBadge}</div><div class="flex flex-wrap justify-end gap-y-0.5 md:gap-y-1 mt-1.5 md:mt-2">${hHTML}</div></div><div class="p-5 md:p-6 flex-grow flex flex-col"><p class="text-[9px] md:text-[10px] font-black text-indigo-500 mb-0.5 md:mb-1 tracking-tighter uppercase">${s.rule || '자유 룰'}</p><h4 class="text-sm md:text-base font-black text-slate-800 mb-2 line-clamp-2 leading-tight">${s.title}</h4><div class="mt-auto pt-4 flex justify-between items-center"><span class="text-[9px] md:text-[10px] font-bold text-slate-500">GM: ${s.creator?.nickname || '알 수 없음'}</span><span class="text-[10px] md:text-[11px] font-black ${isFull ? 'text-red-400' : 'text-slate-400'}">👤 ${mbs.length}/${s.capacity}</span></div></div></div>`;
-            }).join('');
+            // 세션 카드 그리드 렌더링 호출
+            renderLobbyGrid();
         }
 
         window.changeMasterMonth = (v) => { masterDate.setMonth(masterDate.getMonth() + v); renderLobby(); };
@@ -303,60 +375,17 @@
         document.getElementById('btn-login').onclick = () => client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
         document.getElementById('btn-logout').onclick = async () => { await client.auth.signOut(); localStorage.clear(); window.location.replace(window.location.origin + window.location.pathname); };
         
-        document.getElementById('btn-open-create').onclick = () => { 
-            document.getElementById('edit-session-id').value = ""; document.getElementById('modal-title').innerText = "🎲 새 세션 개설"; 
-            window.resetRuleUI(); // 룰 입력창 초기화
-            document.getElementById('in-title').value = ""; document.getElementById('in-desc').value = ""; currentTags = []; renderTagUI(); document.getElementById('color-hex-display').innerText = '배너 컬러'; document.getElementById('in-cap').value = '4'; window.toggleCustomCap(); toggle('btn-create-delete', false); toggle('modal-create', true); 
-        };
+        document.getElementById('btn-open-create').onclick = () => { document.getElementById('edit-session-id').value = ""; document.getElementById('modal-title').innerText = "🎲 새 세션 개설"; window.resetRuleUI(); document.getElementById('in-title').value = ""; document.getElementById('in-desc').value = ""; currentTags = []; renderModalTagUI(); document.getElementById('color-hex-display').innerText = '배너 컬러'; document.getElementById('in-cap').value = '4'; window.toggleCustomCap(); toggle('btn-create-delete', false); toggle('modal-create', true); };
         document.getElementById('btn-create-close').onclick = () => toggle('modal-create', false);
         document.getElementById('mode-on').onclick = () => { locType = 'online'; updateLocUI(); };
         document.getElementById('mode-off').onclick = () => { locType = 'offline'; updateLocUI(); };
         const updateLocUI = () => { const isOn = locType === 'online'; document.getElementById('mode-on').className = isOn ? "flex-1 py-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-600 font-bold text-xs md:text-sm" : "flex-1 py-3 rounded-xl border-2 border-slate-100 text-slate-400 font-bold text-xs md:text-sm"; document.getElementById('mode-off').className = !isOn ? "flex-1 py-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-600 font-bold text-xs md:text-sm" : "flex-1 py-3 rounded-xl border-2 border-slate-100 text-slate-400 font-bold text-xs md:text-sm"; };
+        document.getElementById('btn-create-submit').onclick = async () => { if (!userState) return; let ruleVal = ""; if (!document.getElementById('in-rule-custom').classList.contains('hidden')) { ruleVal = document.getElementById('in-rule-custom').value.trim(); } else if (!document.getElementById('in-rule-all').classList.contains('hidden')) { ruleVal = document.getElementById('in-rule-all').value; } else { ruleVal = document.getElementById('in-rule-primary').value; } if (!ruleVal || ruleVal === 'show_all' || ruleVal === 'custom') return alert("사용 룰을 선택하거나 입력해 주세요."); let capV = document.getElementById('in-cap').value; if (capV === 'custom') { capV = document.getElementById('in-cap-custom').value; if (!capV || isNaN(capV) || capV < 1) return alert("인원수를 입력하세요."); } const pl = { title: document.getElementById('in-title').value, rule: ruleVal, description: document.getElementById('in-desc').value, capacity: capV, location_type: locType, location_detail: document.getElementById('in-loc').value, banner_color: document.getElementById('in-color').value, creator_id: userState.id, tags: currentTags }; const sId = document.getElementById('edit-session-id').value; const { error } = sId ? await client.from('sessions').update(pl).eq('id', sId) : await client.from('sessions').insert(pl); if (error) alert(error.message); else { toggle('modal-create', false); currentSessionId ? renderRoom() : renderLobby(); } };
+        window.openEditModal = (id) => { const s = allSessions.find(item => item.id === id); if (!s) return; document.getElementById('edit-session-id').value = s.id; document.getElementById('modal-title').innerText = "🎲 세션 수정"; document.getElementById('in-title').value = s.title; window.resetRuleUI(); const popRules = ['크툴루의 부름(CoC)', '인세인(inSANe)', '마기카로기아(마기로기)', '더블크로스(Double Cross)', '던전월드', '피아스코']; if (popRules.includes(s.rule)) { document.getElementById('in-rule-primary').value = s.rule; } else if (ALL_RULES_DB.includes(s.rule)) { document.getElementById('in-rule-primary').classList.add('hidden'); document.getElementById('in-rule-all').classList.remove('hidden'); document.getElementById('btn-rule-cancel').classList.remove('hidden'); document.getElementById('in-rule-all').value = s.rule; } else { document.getElementById('in-rule-primary').classList.add('hidden'); document.getElementById('in-rule-custom').classList.remove('hidden'); document.getElementById('btn-rule-cancel').classList.remove('hidden'); document.getElementById('in-rule-custom').value = s.rule; } document.getElementById('in-desc').value = s.description || ""; document.getElementById('in-loc').value = s.location_detail; document.getElementById('in-color').value = s.banner_color; window.updateColorDisplay(s.banner_color); let cap = s.capacity; if (cap >= 1 && cap <= 10) { document.getElementById('in-cap').value = cap; window.toggleCustomCap(); } else { document.getElementById('in-cap').value = 'custom'; window.toggleCustomCap(); document.getElementById('in-cap-custom').value = cap; } currentTags = s.tags || []; renderModalTagUI(); locType = s.location_type; updateLocUI(); toggle('btn-create-delete', true); toggle('modal-create', true); };
         
-        // [핵심 패치] 저장 시 어느 칸에서 데이터를 가져올지 판단하는 로직
-        document.getElementById('btn-create-submit').onclick = async () => { 
-            if (!userState) return; 
-            
-            let ruleVal = "";
-            if (!document.getElementById('in-rule-custom').classList.contains('hidden')) {
-                ruleVal = document.getElementById('in-rule-custom').value.trim();
-            } else if (!document.getElementById('in-rule-all').classList.contains('hidden')) {
-                ruleVal = document.getElementById('in-rule-all').value;
-            } else {
-                ruleVal = document.getElementById('in-rule-primary').value;
-            }
-            if (!ruleVal || ruleVal === 'show_all' || ruleVal === 'custom') return alert("사용 룰을 선택하거나 입력해 주세요.");
-
-            let capV = document.getElementById('in-cap').value; if (capV === 'custom') { capV = document.getElementById('in-cap-custom').value; if (!capV || isNaN(capV) || capV < 1) return alert("인원수를 입력하세요."); } 
-            const pl = { title: document.getElementById('in-title').value, rule: ruleVal, description: document.getElementById('in-desc').value, capacity: capV, location_type: locType, location_detail: document.getElementById('in-loc').value, banner_color: document.getElementById('in-color').value, creator_id: userState.id, tags: currentTags }; const sId = document.getElementById('edit-session-id').value; const { error } = sId ? await client.from('sessions').update(pl).eq('id', sId) : await client.from('sessions').insert(pl); if (error) alert(error.message); else { toggle('modal-create', false); currentSessionId ? renderRoom() : renderLobby(); } 
-        };
+        function renderModalTagUI() { document.getElementById('modal-tags-container').innerHTML = AVAILABLE_TAGS.map(tag => { const isS = currentTags.includes(tag); return `<button type="button" onclick="toggleModalSessionTag('${tag}')" class="py-1 md:py-1.5 px-2 md:px-3 rounded-lg md:rounded-xl border-2 text-[9px] md:text-[10px] font-black transition-colors ${isS ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'bg-white border-slate-200 text-slate-400'}">#${tag}</button>`; }).join(''); }
+        window.toggleModalSessionTag = (tag) => { currentTags = currentTags.includes(tag) ? currentTags.filter(t => t !== tag) : [...currentTags, tag]; renderModalTagUI(); };
         
-        // [핵심 패치] 수정창을 열 때 기존 데이터를 알맞은 칸에 매핑하는 로직
-        window.openEditModal = (id) => { 
-            const s = allSessions.find(item => item.id === id); if (!s) return; 
-            document.getElementById('edit-session-id').value = s.id; document.getElementById('modal-title').innerText = "🎲 세션 수정"; document.getElementById('in-title').value = s.title; 
-            
-            window.resetRuleUI();
-            const popRules = ['크툴루의 부름(CoC)', '인세인(inSANe)', '마기카로기아(마기로기)', '더블크로스(Double Cross)', '던전월드', '피아스코'];
-            if (popRules.includes(s.rule)) {
-                document.getElementById('in-rule-primary').value = s.rule;
-            } else if (ALL_RULES_DB.includes(s.rule)) {
-                document.getElementById('in-rule-primary').classList.add('hidden');
-                document.getElementById('in-rule-all').classList.remove('hidden');
-                document.getElementById('btn-rule-cancel').classList.remove('hidden');
-                document.getElementById('in-rule-all').value = s.rule;
-            } else {
-                document.getElementById('in-rule-primary').classList.add('hidden');
-                document.getElementById('in-rule-custom').classList.remove('hidden');
-                document.getElementById('btn-rule-cancel').classList.remove('hidden');
-                document.getElementById('in-rule-custom').value = s.rule;
-            }
-
-            document.getElementById('in-desc').value = s.description || ""; document.getElementById('in-loc').value = s.location_detail; document.getElementById('in-color').value = s.banner_color; window.updateColorDisplay(s.banner_color); let cap = s.capacity; if (cap >= 1 && cap <= 10) { document.getElementById('in-cap').value = cap; window.toggleCustomCap(); } else { document.getElementById('in-cap').value = 'custom'; window.toggleCustomCap(); document.getElementById('in-cap-custom').value = cap; } currentTags = s.tags || []; renderTagUI(); locType = s.location_type; updateLocUI(); toggle('btn-create-delete', true); toggle('modal-create', true); 
-        };
-        
-        function renderTagUI() { document.getElementById('modal-tags-container').innerHTML = AVAILABLE_TAGS.map(tag => { const isS = currentTags.includes(tag); return `<button type="button" onclick="toggleSessionTag('${tag}')" class="py-1 md:py-1.5 px-2 md:px-3 rounded-lg md:rounded-xl border-2 text-[9px] md:text-[10px] font-black transition-colors ${isS ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'bg-white border-slate-200 text-slate-400'}">#${tag}</button>`; }).join(''); }
-        window.toggleSessionTag = (tag) => { currentTags = currentTags.includes(tag) ? currentTags.filter(t => t !== tag) : [...currentTags, tag]; renderTagUI(); };
         window.toggleCustomCap = () => { const isC = document.getElementById('in-cap').value === 'custom'; toggle('in-cap-custom', isC); toggle('btn-cap-cancel', isC); if (isC) { document.getElementById('in-cap-custom').focus(); } };
         window.cancelCustomCap = () => { document.getElementById('in-cap').value = '4'; window.toggleCustomCap(); };
         window.toggleRepeatCount = () => { toggle('in-confirm-count', document.getElementById('in-confirm-repeat').value !== 'none'); };
